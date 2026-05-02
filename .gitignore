@@ -1,0 +1,30 @@
+# Environment Variables
+.env
+
+# Python / Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Machine Learning Models (Bobot model seringkali terlalu besar untuk Git)
+*.h5
+*.pt
+app/ml_models/*
+!app/ml_models/.gitkeep
+
+# IDE / OS Files
+.vscode/
+.idea/
+.DS_Store
+
+# File Upload / Data
+*.sqlite3
+# Hapus tanda pagar di bawah ini jika file excel tidak ingin ikut ter-commit
+# *.xlsx
+# *.xls
+# *.csv

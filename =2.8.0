@@ -1,0 +1,6 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting PyJWT
+  Downloading pyjwt-2.12.1-py3-none-any.whl.metadata (4.1 kB)
+Downloading pyjwt-2.12.1-py3-none-any.whl (29 kB)
+Installing collected packages: PyJWT
+Successfully installed PyJWT-2.12.1
