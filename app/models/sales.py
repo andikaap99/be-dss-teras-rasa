@@ -12,3 +12,4 @@ class Sales(Base):
     jeruk = Column(Integer, default=0)
     jambu = Column(Integer, default=0)
     strobery = Column(Integer, default=0)
+    omzet = Column(Integer, default=0)
