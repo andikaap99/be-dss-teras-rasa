@@ -138,5 +138,81 @@ axios.get('/api/menu-composition');
   "data": [125, 45, 30, 25, 15]
 }
 ```
+### 4. Dashboard Prediksi & Retrain Model
+**Get Prediksi Omzet Esok Hari**
+Endpoint ini digunakan untuk memprediksi estimasi omzet penjualan untuk esok hari menggunakan model Machine Learning (LSTM). Sistem akan memvalidasi terlebih dahulu apakah data penjualan hari ini sudah diunggah atau belum.
+
+- URL: /api/predict-omzet
+
+- Method: GET
+
+- Format Body: N/A (Tidak membutuhkan body)
+
+**Contoh Request (Javascript/Axios)**
+```
+axios.get('/api/predict-omzet', {
+  headers: { 
+    // 'Authorization': `Bearer ${token}` 
+  }
+});
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "message": "Prediksi berhasil",
+  "tanggal_prediksi": "2026-06-04",
+  "estimasi_omzet": 255000
+}
+```
+**Get Status Training Model**
+Endpoint ini digunakan untuk menampilkan tanggal dan jam berapa model LSTM terakhir kali dilatih (berdasarkan waktu modifikasi file model .h5 di server).
+
+- URL: /api/train-status
+
+- Method: GET
+
+- Format Body: N/A
+
+**Contoh Request (Javascript/Axios)**
+```
+axios.get('/api/train-status', {
+  headers: { 
+    // 'Authorization': `Bearer ${token}` 
+  }
+});
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "status": "Ready",
+  "terakhir_train": "2026-06-02 17:00:05"
+}
+```
+**Get Retrain Model (Manual)**
+Endpoint ini digunakan untuk memicu proses training ulang model LSTM secara manual di luar jadwal otomatis. Proses berjalan sebagai background task sehingga langsung memberikan response tanpa membuat halaman menunggu (loading) lama.
+
+- URL: /api/retrain-manual
+
+- Method: POST
+
+- Format Body: N/A
+
+**Contoh Request (Javascript/Axios)**
+```
+axios.post('/api/retrain-manual', {}, {
+  headers: { 
+    // 'Authorization': `Bearer ${token}` 
+  }
+});
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "message": "Proses training manual sedang berjalan di latar belakang."
+}
+```
 
 
