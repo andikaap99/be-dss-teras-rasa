@@ -139,7 +139,7 @@ axios.get('/api/menu-composition');
 }
 ```
 ### 4. Dashboard Prediksi & Retrain Model
-**Get Prediksi Omzet Esok Hari**
+#### Get Prediksi Omzet Esok Hari
 Endpoint ini digunakan untuk memprediksi estimasi omzet penjualan untuk esok hari menggunakan model Machine Learning (LSTM). Sistem akan memvalidasi terlebih dahulu apakah data penjualan hari ini sudah diunggah atau belum.
 
 - URL: /api/predict-omzet
@@ -165,7 +165,7 @@ axios.get('/api/predict-omzet', {
   "estimasi_omzet": 255000
 }
 ```
-**Get Status Training Model**
+#### Get Status Training Model
 Endpoint ini digunakan untuk menampilkan tanggal dan jam berapa model LSTM terakhir kali dilatih (berdasarkan waktu modifikasi file model .h5 di server).
 
 - URL: /api/train-status
@@ -190,7 +190,7 @@ axios.get('/api/train-status', {
   "terakhir_train": "2026-06-02 17:00:05"
 }
 ```
-**Get Retrain Model (Manual)**
+#### Get Retrain Model (Manual)
 Endpoint ini digunakan untuk memicu proses training ulang model LSTM secara manual di luar jadwal otomatis. Proses berjalan sebagai background task sehingga langsung memberikan response tanpa membuat halaman menunggu (loading) lama.
 
 - URL: /api/retrain-manual
