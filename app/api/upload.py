@@ -11,6 +11,16 @@ router = APIRouter()
 # Variabel global sesuai permintaan
 is_data_uploaded_today = False
 
+# Dictionary Master Harga (Sesuaikan dengan harga asli)
+HARGA_MENU = {
+    "mie_ayam": 15000,
+    "alpukat": 12000,
+    "mangga": 12000,
+    "jeruk": 10000,
+    "jambu": 10000,
+    "strobery": 12000
+}
+
 def get_db():
     db = SessionLocal()
     try:
@@ -34,6 +44,16 @@ async def upload_harian(file: UploadFile = File(...), db: Session = Depends(get_
             row_date = row['date']
             if isinstance(row_date, pd.Timestamp):
                 row_date = row_date.date()
+            
+            # 1. Kalkulasi Omzet Otomatis
+            total_omzet = (
+                (row['mie ayam'] * HARGA_MENU['mie_ayam']) +
+                (row['alpukat'] * HARGA_MENU['alpukat']) +
+                (row['mangga'] * HARGA_MENU['mangga']) +
+                (row['jeruk'] * HARGA_MENU['jeruk']) +
+                (row['jambu'] * HARGA_MENU['jambu']) +
+                (row['strobery'] * HARGA_MENU['strobery'])
+            )
                 
             # Cek apakah tanggal sudah ada di DB
             db_sale = db.query(Sales).filter(Sales.date == row_date).first()
@@ -46,6 +66,7 @@ async def upload_harian(file: UploadFile = File(...), db: Session = Depends(get_
                 db_sale.jeruk = row['jeruk']
                 db_sale.jambu = row['jambu']
                 db_sale.strobery = row['strobery']
+                db_sale.omzet = total_omzet  # <-- Simpan update omzet
             else:
                 # Insert data baru
                 new_sale = Sales(
@@ -55,7 +76,8 @@ async def upload_harian(file: UploadFile = File(...), db: Session = Depends(get_
                     mangga=row['mangga'],
                     jeruk=row['jeruk'],
                     jambu=row['jambu'],
-                    strobery=row['strobery']
+                    strobery=row['strobery'],
+                    omzet=total_omzet  # <-- Simpan insert omzet
                 )
                 db.add(new_sale)
                 
