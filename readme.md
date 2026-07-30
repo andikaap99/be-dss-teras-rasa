@@ -44,6 +44,17 @@ Endpoint ini digunakan untuk mengunggah file Excel (.xlsx atau .xls) yang berisi
 |-----------|--------|--------|-----------------------------|
 | file      | file   | Ya     | File rekap penjualan (.xlsx / .xls)|
 
+**Format Kolom Excel:**
+| Kolom     | Tipe   | Keterangan                  |
+|-----------|--------|-----------------------------|
+| date      | Date   | Tanggal penjualan (format: YYYY-MM-DD) |
+| mie ayam  | Number | Jumlah porsi mie ayam terjual |
+| alpukat   | Number | Jumlah porsi jus alpukat terjual |
+| mangga    | Number | Jumlah porsi jus mangga terjual |
+| jeruk     | Number | Jumlah porsi jus jeruk terjual |
+| jambu     | Number | Jumlah porsi jus jambu terjual |
+| strobery  | Number | Jumlah porsi jus strobery terjual |
+
 **Contoh Request (Javascript/Axios)**
 ```
 // Asumsi 'fileInput' adalah elemen <input type="file"> di HTML
@@ -136,6 +147,129 @@ axios.get('/api/menu-composition');
 {
   "labels": ["Mie Ayam", "Mangga", "Alpukat", "Jeruk", "Jambu"],
   "data": [125, 45, 30, 25, 15]
+}
+```
+
+### 4. Prediksi & Training
+#### Prediksi Omzet Besok
+Endpoint ini digunakan untuk memprediksi estimasi omzet penjualan hari berikutnya. Sistem akan menggunakan model LSTM yang sudah di-training sebelumnya untuk setiap menu (Mie Ayam, Alpukat, Mangga, Jeruk, Jambu, Strobery) dan mengalikan hasil prediksi porsi dengan harga satuan masing-masing menu.
+- URL: /api/predict-omzet
+- Method: GET
+- Format Body: N/A
+
+**Catatan Penting:**
+- Data penjualan hari ini harus sudah di-upload terlebih dahulu sebelum melakukan prediksi.
+- Minimal harus ada 7 hari data historis di database.
+
+**Contoh Request (Javascript/Axios)**
+```
+axios.get('/api/predict-omzet');
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "message": "Prediksi berhasil",
+  "tanggal_prediksi": "2026-07-23",
+  "estimasi_omzet": 285000,
+  "detail_per_menu": {
+    "mie_ayam": { "porsi": 12, "harga_satuan": 15000, "omzet": 180000 },
+    "alpukat": { "porsi": 3, "harga_satuan": 12000, "omzet": 36000 },
+    "mangga": { "porsi": 2, "harga_satuan": 12000, "omzet": 24000 },
+    "jeruk": { "porsi": 2, "harga_satuan": 10000, "omzet": 20000 },
+    "jambu": { "porsi": 1, "harga_satuan": 10000, "omzet": 10000 },
+    "strobery": { "porsi": 1, "harga_satuan": 12000, "omzet": 15000 }
+  }
+}
+```
+
+#### Status Training Model
+Endpoint ini digunakan untuk menampilkan status kesiapan model dan waktu terakhir model di-training.
+- URL: /api/train-status
+- Method: GET
+
+**Contoh Request**
+```
+axios.get('/api/train-status');
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "status": "Ready",
+  "terakhir_train": "2026-07-22 17:00:00"
+}
+```
+
+#### Retrain Manual
+Endpoint ini digunakan untuk menjalankan proses training ulang model secara manual di latar belakang.
+- URL: /api/retrain-manual
+- Method: POST
+
+**Contoh Request**
+```
+axios.post('/api/retrain-manual');
+```
+
+**Response Sukses (200 OK)**
+```
+{
+  "message": "Proses training manual sedang berjalan di latar belakang."
+}
+```
+
+#### Prediksi Kebutuhan Bahan Baku
+Endpoint ini digunakan untuk memprediksi kebutuhan bahan baku besok berdasarkan hasil prediksi porsi penjualan per menu. Sistem mengalikan prediksi porsi dengan kamus bahan baku untuk setiap menu, lalu menjumlahkan seluruh kebutuhan bahan baku.
+
+- URL: /api/predict-bahan-baku
+- Method: GET
+- Format Body: N/A
+
+**Catatan Penting:**
+- Data penjualan hari ini harus sudah di-upload terlebih dahulu sebelum melakukan prediksi.
+- Minimal harus ada 7 hari data historis di database.
+
+**Contoh Request (Javascript/Axios)**
+```
+axios.get('/api/predict-bahan-baku');
+```
+
+**Response Sukses (200 OK)**
+```json
+{
+  "message": "Prediksi kebutuhan bahan baku berhasil",
+  "tanggal_prediksi": "2026-07-31",
+  "prediksi_porsi_per_menu": {
+    "mie_ayam": 45,
+    "alpukat": 10,
+    "mangga": 8,
+    "jeruk": 7,
+    "jambu": 5,
+    "strobery": 9
+  },
+  "kebutuhan_bahan_baku": [
+    { "nama": "Mie basah", "jumlah": 4500, "satuan": "gram" },
+    { "nama": "Daging ayam (cincang/dadu)", "jumlah": 3825, "satuan": "gram" },
+    { "nama": "Minyak ayam/bawang", "jumlah": 675, "satuan": "ml" },
+    { "nama": "Kecap asin", "jumlah": 225, "satuan": "ml" },
+    { "nama": "Kecap manis", "jumlah": 810, "satuan": "ml" },
+    { "nama": "Saus tiram", "jumlah": 225, "satuan": "gram" },
+    { "nama": "Garam", "jumlah": 112.5, "satuan": "gram" },
+    { "nama": "Kaldu bubuk", "jumlah": 112.5, "satuan": "gram" },
+    { "nama": "Merica bubuk", "jumlah": 45, "satuan": "gram" },
+    { "nama": "Bawang putih (halus)", "jumlah": 292.5, "satuan": "gram" },
+    { "nama": "Bawang merah (halus)", "jumlah": 405, "satuan": "gram" },
+    { "nama": "Air/Kuah kaldu", "jumlah": 7875, "satuan": "ml" },
+    { "nama": "Daging Alpukat", "jumlah": 1100, "satuan": "gram" },
+    { "nama": "Gula Pasir", "jumlah": 673.75, "satuan": "gram" },
+    { "nama": "Susu Kental Manis", "jumlah": 300, "satuan": "ml" },
+    { "nama": "Air Matang / Es Batu", "jumlah": 2625, "satuan": "ml" },
+    { "nama": "Daging Mangga", "jumlah": 880, "satuan": "gram" },
+    { "nama": "Susu Kental Manis / UHT", "jumlah": 340, "satuan": "ml" },
+    { "nama": "Air Perasan Jeruk", "jumlah": 770, "satuan": "ml" },
+    { "nama": "Daging Jambu Biji Merah", "jumlah": 550, "satuan": "gram" },
+    { "nama": "Buah Stroberi Segar", "jumlah": 810, "satuan": "gram" }
+  ]
 }
 ```
 

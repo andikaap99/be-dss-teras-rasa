@@ -24,7 +24,5 @@ app/ml_models/*
 
 # File Upload / Data
 *.sqlite3
-# Hapus tanda pagar di bawah ini jika file excel tidak ingin ikut ter-commit
-# *.xlsx
-# *.xls
-# *.csv
+*.xlsx
+*.xls
