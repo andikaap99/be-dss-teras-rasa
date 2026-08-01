@@ -16,21 +16,24 @@ def get_db():
         db.close()
 
 
+def get_recent_dates(db, limit=7):
+    rows = (
+        db.query(Transaction.date)
+        .distinct()
+        .order_by(Transaction.date.desc())
+        .limit(limit)
+        .all()
+    )
+    return [row[0] for row in rows]
+
+
 @router.get("/kpi")
 def get_kpi(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    subq = (
-        db.query(Transaction.date, Transaction.menu_id, Transaction.quantity)
-        .order_by(Transaction.date.desc())
-        .limit(42)
-        .subquery()
-    )
+    recent_dates = get_recent_dates(db, 7)
+    if not recent_dates:
+        return {"kpi": {"total_penjualan_mie_ayam": 0, "jus_terlaris": "-", "jus_tersepi": "-"}}
 
-    totals = (
-        db.query(
-            func.sum(subq.c.quantity).label("total_qty"),
-        )
-        .first()
-    )
+    min_date = min(recent_dates)
 
     mie_ayam_menu = db.query(Menu).filter(Menu.name == "mie_ayam").first()
     if not mie_ayam_menu:
@@ -39,9 +42,7 @@ def get_kpi(db: Session = Depends(get_db), current_user=Depends(get_current_user
     mie_ayam_total = (
         db.query(func.sum(Transaction.quantity))
         .filter(
-            Transaction.date.in_(
-                db.query(Transaction.date).order_by(Transaction.date.desc()).limit(7)
-            ),
+            Transaction.date >= min_date,
             Transaction.menu_id == mie_ayam_menu.id,
         )
         .scalar()
@@ -54,9 +55,7 @@ def get_kpi(db: Session = Depends(get_db), current_user=Depends(get_current_user
         total = (
             db.query(func.sum(Transaction.quantity))
             .filter(
-                Transaction.date.in_(
-                    db.query(Transaction.date).order_by(Transaction.date.desc()).limit(7)
-                ),
+                Transaction.date >= min_date,
                 Transaction.menu_id == jm.id,
             )
             .scalar()
@@ -103,12 +102,11 @@ def get_omzet_trend(db: Session = Depends(get_db), current_user=Depends(get_curr
 
 @router.get("/menu-composition")
 def get_menu_composition(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    recent_dates = (
-        db.query(Transaction.date)
-        .order_by(Transaction.date.desc())
-        .limit(7)
-        .subquery()
-    )
+    recent_dates = get_recent_dates(db, 7)
+    if not recent_dates:
+        return {"labels": [], "data": []}
+
+    min_date = min(recent_dates)
 
     results = (
         db.query(
@@ -116,7 +114,7 @@ def get_menu_composition(db: Session = Depends(get_db), current_user=Depends(get
             func.sum(Transaction.quantity).label("total_qty"),
         )
         .join(Transaction, Transaction.menu_id == Menu.id)
-        .filter(Transaction.date.in_(db.query(recent_dates.c.date)))
+        .filter(Transaction.date >= min_date)
         .group_by(Menu.name)
         .order_by(func.sum(Transaction.quantity).desc())
         .limit(5)

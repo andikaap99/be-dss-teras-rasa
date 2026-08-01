@@ -11,11 +11,8 @@ venv/
 env/
 .venv/
 
-# Machine Learning Models (Bobot model seringkali terlalu besar untuk Git)
-*.h5
+# Machine Learning Models
 *.pt
-app/ml_models/*
-!app/ml_models/.gitkeep
 
 # IDE / OS Files
 .vscode/
