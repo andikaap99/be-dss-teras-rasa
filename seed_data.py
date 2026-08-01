@@ -23,6 +23,27 @@ def seed_user(db):
     print(f"  User '{USERNAME}' berhasil dibuat.")
 
 
+def seed_menus(db):
+    MENU_MASTER = [
+        {"name": "mie_ayam", "price": 15000},
+        {"name": "alpukat", "price": 12000},
+        {"name": "mangga", "price": 12000},
+        {"name": "jeruk", "price": 10000},
+        {"name": "jambu", "price": 10000},
+        {"name": "strobery", "price": 12000},
+    ]
+
+    existing = db.query(Menu).all()
+    if existing:
+        print(f"  Menu sudah ada ({len(existing)} item), skip.")
+        return
+
+    for menu in MENU_MASTER:
+        db.add(Menu(name=menu["name"], price=menu["price"]))
+    db.commit()
+    print(f"  {len(MENU_MASTER)} menu berhasil di-seed.")
+
+
 def seed_transactions(db):
     menus = db.query(Menu).all()
     menu_map = {m.name: m for m in menus}
@@ -81,10 +102,13 @@ def run_seed():
 
     db = SessionLocal()
     try:
-        print("\n[1/2] Seed user admin...")
+        print("\n[1/3] Seed user admin...")
         seed_user(db)
 
-        print("\n[2/2] Seed transaksi harian...")
+        print("\n[2/3] Seed menu...")
+        seed_menus(db)
+
+        print("\n[3/3] Seed transaksi harian...")
         seed_transactions(db)
     finally:
         db.close()
