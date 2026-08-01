@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.database import SessionLocal
 from app.models.sales import Menu, Ingredient, MenuIngredient, Transaction
+from app.core.deps import get_current_user
 
 router = APIRouter()
 
@@ -163,7 +164,7 @@ def get_predicted_porsi(db: Session):
 
 
 @router.get("/predict-omzet")
-def predict_omzet(db: Session = Depends(get_db)):
+def predict_omzet(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     prediksi_porsi = get_predicted_porsi(db)
 
     total_omzet = 0
@@ -190,7 +191,7 @@ def predict_omzet(db: Session = Depends(get_db)):
 
 
 @router.get("/predict-bahan-baku")
-def predict_bahan_baku(db: Session = Depends(get_db)):
+def predict_bahan_baku(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     prediksi_porsi = get_predicted_porsi(db)
 
     total_bahan = {}

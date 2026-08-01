@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database.database import SessionLocal
 from app.models.sales import Transaction, Menu
+from app.core.deps import get_current_user
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ def get_db():
 
 
 @router.get("/kpi")
-def get_kpi(db: Session = Depends(get_db)):
+def get_kpi(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     subq = (
         db.query(Transaction.date, Transaction.menu_id, Transaction.quantity)
         .order_by(Transaction.date.desc())
@@ -79,7 +80,7 @@ def get_kpi(db: Session = Depends(get_db)):
 
 
 @router.get("/omzet-trend")
-def get_omzet_trend(db: Session = Depends(get_db)):
+def get_omzet_trend(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     results = (
         db.query(
             Transaction.date,
@@ -101,7 +102,7 @@ def get_omzet_trend(db: Session = Depends(get_db)):
 
 
 @router.get("/menu-composition")
-def get_menu_composition(db: Session = Depends(get_db)):
+def get_menu_composition(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     recent_dates = (
         db.query(Transaction.date)
         .order_by(Transaction.date.desc())

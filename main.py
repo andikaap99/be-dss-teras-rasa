@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.trainer import retrain_lstm_model
 from app.api import train
+from seed_data import run_seed
 
 
 user.Base.metadata.create_all(bind=engine)
@@ -14,6 +15,8 @@ sales.Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    run_seed()
+
     scheduler = BackgroundScheduler()
     scheduler.add_job(retrain_lstm_model, "cron", hour=17, minute=0)
     scheduler.start()

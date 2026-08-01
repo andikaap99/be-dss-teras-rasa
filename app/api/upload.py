@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.database.database import SessionLocal
 from app.models.sales import Menu, Transaction
+from app.core.deps import get_current_user
 
 router = APIRouter()
 
@@ -20,7 +21,11 @@ def get_db():
 
 
 @router.post("/upload-harian")
-async def upload_harian(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_harian(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     global is_data_uploaded_today
 
     if not file.filename.endswith((".xlsx", ".xls")):
