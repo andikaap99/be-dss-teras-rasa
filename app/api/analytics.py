@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database.database import SessionLocal
-from app.models.sales import Sales
+from app.models.sales import Transaction, Menu
 
 router = APIRouter()
+
 
 def get_db():
     db = SessionLocal()
@@ -13,93 +14,115 @@ def get_db():
     finally:
         db.close()
 
+
 @router.get("/kpi")
 def get_kpi(db: Session = Depends(get_db)):
-    # 1. Buat subquery untuk mengambil 7 baris terakhir berdasarkan tanggal
-    subq = db.query(Sales).order_by(Sales.date.desc()).limit(7).subquery()
+    subq = (
+        db.query(Transaction.date, Transaction.menu_id, Transaction.quantity)
+        .order_by(Transaction.date.desc())
+        .limit(42)
+        .subquery()
+    )
 
-    # 2. Query sum diarahkan ke kolom-kolom dari subquery tersebut (menggunakan .c)
-    totals = db.query(
-        func.sum(subq.c.mie_ayam).label('mie_ayam'),
-        func.sum(subq.c.alpukat).label('alpukat'),
-        func.sum(subq.c.mangga).label('mangga'),
-        func.sum(subq.c.jeruk).label('jeruk'),
-        func.sum(subq.c.jambu).label('jambu'),
-        func.sum(subq.c.strobery).label('strobery')
-    ).first()
+    totals = (
+        db.query(
+            func.sum(subq.c.quantity).label("total_qty"),
+        )
+        .first()
+    )
 
-    # 3. Handle jika database masih kosong
-    if not totals or totals.mie_ayam is None:
+    mie_ayam_menu = db.query(Menu).filter(Menu.name == "mie_ayam").first()
+    if not mie_ayam_menu:
         return {"kpi": {"total_penjualan_mie_ayam": 0, "jus_terlaris": "-", "jus_tersepi": "-"}}
 
-    # 4. Kelompokkan data khusus jus ke dalam dictionary
-    jus_totals = {
-        "alpukat": totals.alpukat,
-        "mangga": totals.mangga,
-        "jeruk": totals.jeruk,
-        "jambu": totals.jambu,
-        "strobery": totals.strobery
-    }
+    mie_ayam_total = (
+        db.query(func.sum(Transaction.quantity))
+        .filter(
+            Transaction.date.in_(
+                db.query(Transaction.date).order_by(Transaction.date.desc()).limit(7)
+            ),
+            Transaction.menu_id == mie_ayam_menu.id,
+        )
+        .scalar()
+        or 0
+    )
 
-    # 5. Cari jus terlaris dan tersepi
-    jus_terlaris = max(jus_totals, key=jus_totals.get)
-    jus_tersepi = min(jus_totals, key=jus_totals.get)
+    juice_menus = db.query(Menu).filter(Menu.name != "mie_ayam").all()
+    juice_totals = {}
+    for jm in juice_menus:
+        total = (
+            db.query(func.sum(Transaction.quantity))
+            .filter(
+                Transaction.date.in_(
+                    db.query(Transaction.date).order_by(Transaction.date.desc()).limit(7)
+                ),
+                Transaction.menu_id == jm.id,
+            )
+            .scalar()
+            or 0
+        )
+        juice_totals[jm.name] = total
+
+    if not juice_totals:
+        return {"kpi": {"total_penjualan_mie_ayam": int(mie_ayam_total), "jus_terlaris": "-", "jus_tersepi": "-"}}
+
+    jus_terlaris = max(juice_totals, key=juice_totals.get)
+    jus_tersepi = min(juice_totals, key=juice_totals.get)
 
     return {
         "kpi": {
-            "total_penjualan_mie_ayam": int(totals.mie_ayam),
+            "total_penjualan_mie_ayam": int(mie_ayam_total),
             "jus_terlaris": jus_terlaris,
-            "jus_tersepi": jus_tersepi
+            "jus_tersepi": jus_tersepi,
         }
     }
 
+
 @router.get("/omzet-trend")
 def get_omzet_trend(db: Session = Depends(get_db)):
-    # Ambil 7 data terbaru (desc), lalu limit 7
-    sales_data = db.query(Sales.date, Sales.omzet).order_by(Sales.date.desc()).limit(7).all()
-    
-    # Balik urutan list-nya (reverse) agar di grafik tampil dari hari tertua -> terbaru
-    sales_data.reverse()
+    results = (
+        db.query(
+            Transaction.date,
+            func.sum(Transaction.total_price).label("daily_omzet"),
+        )
+        .group_by(Transaction.date)
+        .order_by(Transaction.date.desc())
+        .limit(7)
+        .all()
+    )
+
+    results_list = list(results)
+    results_list.reverse()
 
     return {
-        "labels": [data.date.strftime("%Y-%m-%d") for data in sales_data],
-        "data": [data.omzet for data in sales_data]
+        "labels": [row.date.strftime("%Y-%m-%d") for row in results_list],
+        "data": [int(row.daily_omzet) for row in results_list],
     }
+
 
 @router.get("/menu-composition")
 def get_menu_composition(db: Session = Depends(get_db)):
-    # 1. Buat subquery untuk membatasi 7 hari terakhir
-    subq = db.query(Sales).order_by(Sales.date.desc()).limit(7).subquery()
+    recent_dates = (
+        db.query(Transaction.date)
+        .order_by(Transaction.date.desc())
+        .limit(7)
+        .subquery()
+    )
 
-    # 2. Jumlahkan porsi masing-masing menu dari 7 hari tersebut
-    totals = db.query(
-        func.sum(subq.c.mie_ayam).label('mie_ayam'),
-        func.sum(subq.c.alpukat).label('alpukat'),
-        func.sum(subq.c.mangga).label('mangga'),
-        func.sum(subq.c.jeruk).label('jeruk'),
-        func.sum(subq.c.jambu).label('jambu'),
-        func.sum(subq.c.strobery).label('strobery')
-    ).first()
+    results = (
+        db.query(
+            Menu.name,
+            func.sum(Transaction.quantity).label("total_qty"),
+        )
+        .join(Transaction, Transaction.menu_id == Menu.id)
+        .filter(Transaction.date.in_(db.query(recent_dates.c.date)))
+        .group_by(Menu.name)
+        .order_by(func.sum(Transaction.quantity).desc())
+        .limit(5)
+        .all()
+    )
 
-    # 3. Handle jika data kosong
-    if not totals or totals.mie_ayam is None:
-        return {"labels": [], "data": []}
-
-    # 4. Masukkan ke dalam dictionary
-    menu_totals = {
-        "Mie Ayam": int(totals.mie_ayam),
-        "Alpukat": int(totals.alpukat),
-        "Mangga": int(totals.mangga),
-        "Jeruk": int(totals.jeruk),
-        "Jambu": int(totals.jambu),
-        "Strobery": int(totals.strobery)
-    }
-
-    # 5. Urutkan descending berdasarkan value (penjualan), lalu ambil 5 teratas
-    top_5_menus = sorted(menu_totals.items(), key=lambda x: x[1], reverse=True)[:5]
-
-    # 6. Format output menjadi array
     return {
-        "labels": [item[0] for item in top_5_menus],
-        "data": [item[1] for item in top_5_menus]
+        "labels": [row.name for row in results],
+        "data": [int(row.total_qty) for row in results],
     }

@@ -11,16 +11,17 @@ from app.api import train
 user.Base.metadata.create_all(bind=engine)
 sales.Base.metadata.create_all(bind=engine)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = BackgroundScheduler()
-    # Jadwal otomatis jam 17:00 tetap berjalan
-    scheduler.add_job(retrain_lstm_model, 'cron', hour=17, minute=0)
+    scheduler.add_job(retrain_lstm_model, "cron", hour=17, minute=0)
     scheduler.start()
-    
+
     yield
-    
+
     scheduler.shutdown()
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -29,6 +30,7 @@ app.include_router(upload.router, prefix="/api", tags=["Data Sales"])
 app.include_router(analytics.router, prefix="/api", tags=["Analytics Data"])
 app.include_router(predict.router, prefix="/api", tags=["Prediksi"])
 app.include_router(train.router, prefix="/api", tags=["Model Training"])
+
 
 @app.get("/")
 def read_root():

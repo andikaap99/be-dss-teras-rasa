@@ -1,12 +1,12 @@
 {
-  "trained_at": "2026-07-22 08:13:00",
+  "trained_at": "2026-07-30 20:45:41",
   "data_range": {
-    "start": "2026-01-01",
-    "end": "2026-06-30",
-    "total_days": 181
+    "start": "2026-05-01",
+    "end": "2026-07-30",
+    "total_days": 17
   },
   "menus": {
-    "mie ayam": {
+    "mie_ayam": {
       "model_file": "mie_ayam_lstm_model.h5",
       "scaler_file": "mie_ayam_scaler.pkl",
       "best_params": {
@@ -18,9 +18,9 @@
         "seq_length": 7,
         "lstm_units": 64,
         "learning_rate": 0.001,
-        "MAE": 9.1873,
-        "RMSE": 11.6974,
-        "MAPE": 26.31
+        "MAE": 6.9473,
+        "RMSE": 8.0408,
+        "MAPE": 15.3
       }
     },
     "alpukat": {
@@ -35,9 +35,9 @@
         "seq_length": 7,
         "lstm_units": 64,
         "learning_rate": 0.001,
-        "MAE": 2.2171,
-        "RMSE": 2.7074,
-        "MAPE": 35.28
+        "MAE": 3.0845,
+        "RMSE": 3.5572,
+        "MAPE": 24.9
       }
     },
     "mangga": {
@@ -52,9 +52,9 @@
         "seq_length": 7,
         "lstm_units": 128,
         "learning_rate": 0.001,
-        "MAE": 2.4395,
-        "RMSE": 3.1164,
-        "MAPE": 28.51
+        "MAE": 1.5193,
+        "RMSE": 1.8581,
+        "MAPE": 14.34
       }
     },
     "jeruk": {
@@ -69,9 +69,9 @@
         "seq_length": 7,
         "lstm_units": 32,
         "learning_rate": 0.001,
-        "MAE": 3.0212,
-        "RMSE": 3.5594,
-        "MAPE": 44.27
+        "MAE": 1.703,
+        "RMSE": 2.0998,
+        "MAPE": 21.99
       }
     },
     "jambu": {
@@ -86,9 +86,9 @@
         "seq_length": 7,
         "lstm_units": 32,
         "learning_rate": 0.001,
-        "MAE": 1.1534,
-        "RMSE": 1.6106,
-        "MAPE": 59.5
+        "MAE": 2.2981,
+        "RMSE": 2.4855,
+        "MAPE": 36.76
       }
     },
     "strobery": {
@@ -103,9 +103,9 @@
         "seq_length": 7,
         "lstm_units": 128,
         "learning_rate": 0.001,
-        "MAE": 1.8288,
-        "RMSE": 2.3638,
-        "MAPE": 28.56
+        "MAE": 1.616,
+        "RMSE": 1.996,
+        "MAPE": 18.81
       }
     }
   }
